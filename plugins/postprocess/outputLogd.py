@@ -5,6 +5,7 @@ import globalv
 import time
 import calendar
 import os
+import traceback
 class pluginClass(plugin):
     def gettype(self):
         return "postprocess"
@@ -13,9 +14,9 @@ class pluginClass(plugin):
         if complete.split()[0]=="PONG":
             return arguments
         try:
-            user=globalv.nickname
+            user=globalv.nickname.encode('utf-8')
             channel=complete.split()[1]
-            msg=':'.join(complete.split(':')[1:]).strip()
+            msg=':'.join(complete.split(':')[1:]).strip().encode('utf-8')
             ttime=time.gmtime()
             if os.path.exists(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7]))):
                 file=open(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7])),"a")
@@ -23,13 +24,14 @@ class pluginClass(plugin):
                 file=open(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7])),"w")
             if msg.split()[0]=="ACTION":
                 msg=' '.join(msg.split()[1:])[:-1]
+                message="[%(time)d] * %(user)s %(umessage)s" % {"time":time.time(), "user":user,"umessage":msg}
             else:
-                msg="* "+msg
-            message="[%(time)s] * %(user)s %(umessage)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user,"umessage":msg}
+                message="[%(time)d] <%(user)s> %(umessage)s" % {"time":time.time(), "user":user,"umessage":msg}
             if message!="":
                 file.write(message+"\n")
             file.close()
         except Exception as detail:
+            print traceback.format_exc()
             print detail
         return arguments
     def describe(self, complete):

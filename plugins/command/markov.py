@@ -28,7 +28,7 @@ def sublistIndex(l1, l2):
 class pluginClass(plugin):
     def __init__(self):
         pass
-    
+
     def gettype(self):
         return "command"
 
@@ -49,13 +49,13 @@ class pluginClass(plugin):
         print 'Generating markov text'
 
         tuples = cache.keys()
-        
+
         depth = self.depth
-        
+
         endMark = self.tupleToLowerKey(lastWords)
-        
+
         resetAtEnd = endMark not in cache
-        
+
         current = random.choice(tuples)
         genWords = []
 
@@ -67,14 +67,14 @@ class pluginClass(plugin):
             start = self.startPhrase
             genWords.extend(start[:-depth])
             current = tuple(start[-depth:])
-            
+
             endMark2 = self.tupleToLowerKey(self.startPhrase[-depth:])
-        
+
             chainFailure = endMark2 not in cache
 
         while len(genWords) < self.outputLen:
             genWords.append(current[0])
-            
+
             if len(genWords) == self.outputLen-depth+1:
                 genWords.extend(current[1:])
                 break
@@ -85,10 +85,10 @@ class pluginClass(plugin):
                 break
 
             key = self.tupleToLowerKey(current)
-            
+
             if (resetAtEnd and key == endMark) or (chainFailure and key == endMark2) or (random.randint(0,1) == 0 and self.isSentenceEnd(key[-1][-1])):
                 genWords.extend(current[1:])
-                
+
                 current = random.choice(tuples)
             else:
                 current = current[1:] + tuple([random.choice(cache[key])])
@@ -110,8 +110,8 @@ class pluginClass(plugin):
             if args[i] == '-words':
                 try:
                     self.outputLen = int(args[i+1])
-                    if self.outputLen > 500:
-                        return ["PRIVMSG $C$ :Error: too much words. (Max value: 500)"]
+                    if self.outputLen > 200:
+                        return ["PRIVMSG $C$ :Error: too much words. (Max value: 200)"]
                     elif self.outputLen < 0:
                         return ["PRIVMSG $C$ :Error: negative length"]
                     elif self.outputLen == 1:
@@ -132,8 +132,8 @@ class pluginClass(plugin):
             elif args[i] == '-logs':
                 try:
                     self.daysBack = int(args[i+1])
-                    if self.daysBack > 500:
-                        return ["PRIVMSG $C$ :Error: too much logs to read. (Max value: 500)"]
+                    if self.daysBack > 100:
+                        return ["PRIVMSG $C$ :Error: too much logs to read. (Max value: 100)"]
                     elif self.daysBack < 0:
                         return ["PRIVMSG $C$ :Error: negative number of logs"]
                 except:
@@ -147,10 +147,10 @@ class pluginClass(plugin):
                         self.nickFilter = self.nickFilter[:j]
                         break
                     j += 1
-                    
+
                 if len(self.nickFilter) == 0:
                     return ["PRIVMSG $C$ :Invalid argument for -filter - %s" % self.usage()]
-                
+
                 i += len(self.nickFilter)+1
             elif args[i] == '-phrase':
                 self.startPhrase = args[i+1:]
@@ -160,7 +160,7 @@ class pluginClass(plugin):
                         self.startPhrase = self.startPhrase[:j]
                         break
                     j += 1
-                    
+
                 if len(self.startPhrase) == 0:
                     return ["PRIVMSG $C$ :Invalid argument for -phrase - %s" % self.usage()]
                 i += len(self.startPhrase)+1
@@ -180,13 +180,13 @@ class pluginClass(plugin):
         parseResult = self.parseArgs(complete.message().split())
         if len(parseResult) > 0:
             return parseResult
-        
+
         today = time.gmtime()
         today = datetime(today.tm_year, today.tm_mon, today.tm_mday) #datetime.today()
 
         cache = {}
 
-        re_message = re.compile('\[.+?\] \* (?P<poster>[A-Za-z0-9_\[\]^{}-]+) \*? (?P<words>.+)')
+        re_message = re.compile('\[.+?\] (\* |<)(?P<poster>[A-Za-z0-9_\[\]^{}-]+)(>|\s*\*)? (?P<words>.+)')
 
         words = []
 
@@ -222,7 +222,7 @@ class pluginClass(plugin):
                 if not message:
                     continue
                 poster = message.group('poster').lower()
-                if poster == 'omgbot':
+                if poster == 'xbot':
                     continue
 
                 ignore = True
@@ -230,12 +230,12 @@ class pluginClass(plugin):
                     if fnmatch.fnmatch(poster, f):
                         ignore = False
                         break
-                
+
                 if ignore:
                     continue
-                
+
                 message = message.group('words').strip()
-                if message[0] == '!':
+                if message[0] == globalv.commandCharacter:
                     continue
                 if message[-1].isalnum():
                     message += '.'
@@ -265,7 +265,7 @@ class pluginClass(plugin):
         m = self.generateMarkovText(lastWords, cache)
 
         del cache
-        
+
         if not m[0].istitle():
             m = m[0].upper() + m[1:]
         if m[-1].isalnum():
@@ -294,7 +294,7 @@ class pluginClass(plugin):
         output = ["PRIVMSG $C$ :" + markovText]
 
         return output
-    
+
     def describe(self, complete):
         return ["PRIVMSG $C$ :I am the MARKOV CHAIN plugin",
                 "PRIVMSG $C$ :%s" % self.usage(),

@@ -6,6 +6,8 @@ import datetime
 from pluginArguments import pluginArguments
 from pluginFormatter import formatOutput, formatInput
 import time
+import sys
+import traceback
 def getMessage(id):
     return settingsHandler.readSetting("laterd","message",where="id='%s'"%id)
 def getRecipient(id):
@@ -31,9 +33,9 @@ def totalSeconds(td):
 
 def GetTimeUntilDatetime(toDiff):
     times = [
-            ("week", 7 * 24 * 60 * 60), 
+            ("week", 7 * 24 * 60 * 60),
             ("day", 24 * 60 * 60),
-            ("hour", 60*60), 
+            ("hour", 60*60),
             ("minute", 60)
             ]
     difference = totalSeconds((toDiff - datetime.datetime.now()))
@@ -71,7 +73,7 @@ class pluginClass(plugin):
         if complete.type()!="PRIVMSG":
             return [""]
         returns=[]
-        messages=settingsHandler.readSettingRaw("laterd","id",where="('"+user.lower()+"' GLOB recipient OR recipient GLOB '*|"+user.lower()+"|*') AND sent='0'")
+        messages=settingsHandler.readSettingRaw("laterd","id",where="('%s' GLOB recipient OR recipient GLOB '*|%s|*' OR recipient GLOB '%s|*' OR recipient GLOB '*|%s') AND sent='0'" % (user.lower(), user.lower(), user.lower(), user.lower()))
         if messages!=[]:
             for message in messages:
                 wipeMessage=True
@@ -85,33 +87,37 @@ class pluginClass(plugin):
                     plugin=messageText.split()[0]
                     if not correctChannel(messageID, complete.channel()):
                         continue
-                    if plugin in globalv.loadedPlugins.keys():
-                        arguments=pluginArguments(':'+senderMask+" PRIVMSG "+complete.channel()+" :!"+messageText.replace('$recipient$', user).replace('$*$', complete.fullMessage()))
-                        arguments=formatInput(arguments)
+                    messageTextNew = messageText
+                    if plugin not in globalv.loadedPlugins.keys():
+                        plugin = 'say'
+                        messageTextNew = 'say ' + messageTextNew
+                    messageTextNew = messageTextNew.replace('$recipient$', user)
+                    messageTextNew = messageTextNew.replace('$*$', complete.fullMessage().decode('utf-8'))
+                    arguments=pluginArguments(':'+senderMask+" PRIVMSG "+complete.channel()+" :!"+messageTextNew)
+                    arguments=formatInput(arguments)
+                    try:
                         message=globalv.loadedPlugins[plugin].action(arguments)
-                        if message in [[],[""]]:
-                            wipeMessage=False
-                        #returns+=[m.decode('utf-8') for m in message]
-                        returns+=message
-                        if message!=[""] and message!=[]:
-                            msg=message[0]
-                            if msg.split()[0]=="PRIVMSG" or msg.split()[0]=="NOTICE":
-                                location=msg.split()[1]
-                            else:
-                                location="$C$"
-                            if not getAnonymous(messageID):
-                                returns.append("PRIVMSG "+location+" :From "+sender+" to "+user+" "+GetTimeUntilDatetime(timestamp))
-                        if wipeMessage:
-                            setMessageSent(messageID)
-                    else:
-                        returns.append("PRIVMSG $C$ :"+messageText)
+                    except:
+                        message=["PRIVMSG $C$ :%s" % messageText]
+                    if message in [[],[""]]:
+                        wipeMessage=False
+                    #returns+=[m.decode('utf-8') for m in message]
+                    returns+=message
+                    if message!=[""] and message!=[]:
+                        msg=message[0]
+                        if msg.split()[0]=="PRIVMSG" or msg.split()[0]=="NOTICE":
+                            location=msg.split()[1]
+                        else:
+                            location="$C$"
                         if not getAnonymous(messageID):
-                            returns.append("PRIVMSG $C$ :From "+sender+" to "+user+" "+GetTimeUntilDatetime(timestamp))
+                            returns.append("PRIVMSG "+location+" :From "+sender+" to "+user+" "+GetTimeUntilDatetime(timestamp))
+                    if wipeMessage:
                         setMessageSent(messageID)
                     if len(returns) >= 13:
                         break
                 except Exception as detail:
                     print "There was an error in one of the later messages:",detail
+                    traceback.print_tb(sys.exc_info()[2])
                     setMessageSent(messageID)
 
         return returns

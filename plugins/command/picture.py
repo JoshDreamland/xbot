@@ -22,8 +22,8 @@ def wordCloud(frequencies, marks, fontpath, image_width = 1024, image_height = 8
     font = {}
     color = {}
 
-    minSize = 10
-    maxSize = 48
+    minSize = 3
+    maxSize = 80
 
     allFonts = {}
 
@@ -36,10 +36,10 @@ def wordCloud(frequencies, marks, fontpath, image_width = 1024, image_height = 8
         f = allFonts[size]
         x,y = f.getsize(word)
         padding[word] = int(0.2*y)
-        
+
         font[word] = f
         width[word], height[word] = x+padding[word],y+padding[word]
-        v = 220 - 220 * (F**1.2)
+        v = int(220 - 220 * (F**1.2))
         color[word] = (v,v,v)
         if word in marks:
             color[word] = (255,0,0)
@@ -52,7 +52,7 @@ def wordCloud(frequencies, marks, fontpath, image_width = 1024, image_height = 8
         def add(self, e):
             self.elements.add(e)
 
-    rows = [] 
+    rows = []
     currentRow = None
     totalHeight = 0
 
@@ -66,17 +66,17 @@ def wordCloud(frequencies, marks, fontpath, image_width = 1024, image_height = 8
                 row.width += width[word]
                 row.add(word)
                 break
-            
+
         if not found:
             if totalHeight+height[word] > image_height:
                 break
-            
+
             newRow = Row()
             newRow.add(word)
             newRow.width = width[word]
             newRow.height = height[word]
             rows.append(newRow)
-            
+
             totalHeight += newRow.height
 
     im = Image.new('RGB', (image_width, image_height), (255,255,255))
@@ -92,12 +92,12 @@ def wordCloud(frequencies, marks, fontpath, image_width = 1024, image_height = 8
             g.text((ex, ey), e, color[e], font[e])
             x += width[e]
         y += row.height
-            
+
     return im
 
 class pluginClass(plugin):
     re_markup = re.compile('(\x03\d{1,2}(\d{1,2})?|\x02|\x1F|\x16|\x0F)')
-    
+
     def __init__(self):
         pass
 
@@ -165,7 +165,7 @@ class pluginClass(plugin):
                 day += 365
                 year-=1
             path=os.path.join("logs","LogFile - "+channel+"-"+str(year)+"-"+str(day))
-            
+
             if not os.path.exists(path):
                 print path
                 logFails += 1
@@ -176,7 +176,7 @@ class pluginClass(plugin):
 
             data=open(path).readlines()
             for line in data:
-                line=re.search("^\[.*?\] \* (?P<nick>[^\s]*)( \*)? (?P<message>.+)", line)
+                line=re.search("^\[.*?\] (?:\* |<)(?P<nick>[^\s>]*)>? (?P<message>.+)", line)
                 if line is None:
                     continue
                 nick = line.group('nick').lower()
@@ -187,15 +187,32 @@ class pluginClass(plugin):
                         continue
                     else:
                         relevantNicks.add(nick)
-                    
+
                 message = line.group('message')
                 message = self.re_markup.sub('',message)
                 words = message.split()
-                for word in words:
+
+                def simplifyWord(word):
                     wordNew = word.rstrip('"\'!?]).,;:').lstrip('"\'([')
                     if wordNew == '':
                         wordNew = word
                     wordNew = wordNew.lower()
+                    return wordNew
+
+                pollutionCount = {}
+                for word in words:
+                    wordNew = simplifyWord(word)
+                    if len(wordNew) < 3:
+                        continue
+                    pollutionCount[wordNew] = pollutionCount.setdefault(wordNew,0)+1
+                if len(pollutionCount) != 0:
+                    avg = sum(pollutionCount[word] for word in pollutionCount) / float(len(pollutionCount))
+
+                    if avg >= 3:
+                        continue
+
+                for word in words:
+                    wordNew = simplifyWord(word)
                     wordCollection[wordNew] = wordCollection.setdefault(wordNew,0)+1
 
         if len(wordCollection) == 0:
@@ -207,8 +224,8 @@ class pluginClass(plugin):
         if nickFilter != []:
             fileName += '-%s' % (','.join(relevantNicks))
         fileName += '.png'
-        
-        im = wordCloud(wordCollection, marks, r'/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf', width, height)
-        im.save("/home/py/public_html/omgbot/images/%s" % fileName, "PNG")
 
-        return ["PRIVMSG $C$ :" + bitly('http://achene.phantomflame.com/~py/omgbot/images/%s' % (fileName.replace('#','%23')))]
+        im = wordCloud(wordCollection, marks, r'/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf', width, height)
+        im.save("/home/sys-xbot/public_html/images/%s" % fileName, "PNG")
+
+        return ["PRIVMSG $C$ :" + 'http://irc.64digits.com/images/%s' % (fileName.replace('#','%23'))]

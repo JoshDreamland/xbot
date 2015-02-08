@@ -5,14 +5,14 @@ from time import time as currentTime
 class pluginClass(plugin):
     def gettype(self):
         return "special"
-    
+
     def getChannel(self, user):
         user = user.lower()
         for u in globalv.timeUsers:
             if u.lower() == user:
                 return globalv.timeUsers[u]
-        return "PY"
-    
+        return "sirxemic"
+
     def action(self, complete):
         if complete.type()=="NOTICE" and complete.fullMessage().split()[0]=="TIME":
             time=' '.join(complete.message().split())[:-1]

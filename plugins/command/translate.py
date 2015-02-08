@@ -18,6 +18,9 @@ class pluginClass(plugin):
                           ('Belarusian', 'be'),
                           ('Bulgarian', 'bg'),
                           ('Catalan', 'ca'),
+                          ('Chinese', 'zh-CN'),
+                          ('Simplified Chinese', 'zh-CN'),
+                          ('Traditional Chinese', 'zh-TW'),
                           ('Croatian', 'hr'),
                           ('Czech', 'cs'),
                           ('Danish', 'da'),
@@ -67,10 +70,10 @@ class pluginClass(plugin):
                           ('Welsh', 'cy'),
                           ('Yiddish', 'yi')]
         self.languages = {}
+        self.languagesInv = {}
         for a,b in self.langTable:
-            self.languages[a] = b
             self.languages[a.lower()] = b
-            self.languages[b] = a
+            self.languagesInv[b] = a
 
     def gettype(self):
         return "command"
@@ -92,31 +95,23 @@ class pluginClass(plugin):
             if args[1] == 'to':
                 try:
                     langTo = self.languages[args[2].lower()]
-                    if len(langTo) > 2:
-                        raise Exception()
                 except:
-                    return ["PRIVMSG $C$ :Translation failure! :("]
+                    return ["PRIVMSG $C$ :Translation failure! Is %s a valid language?" % args[2]]
                 if len(args) > 3 and args[3] == 'from':
                     try:
                         langFrom = self.languages[args[4].lower()]
-                        if len(langFrom) > 2:
-                            raise Exception()
                     except:
-                        return ["PRIVMSG $C$ :Translation failure! :("]
+                        return ["PRIVMSG $C$ :Translation failure! Is %s a valid language?" % args[4]]
             elif args[1] == 'from':
                 try:
                     langFrom = self.languages[args[2].lower()]
-                    if len(langFrom) > 2:
-                        raise Exception()
                 except:
-                    return ["PRIVMSG $C$ :Translation failure! :("]
+                    return ["PRIVMSG $C$ :Translation failure! Is %s a valid language?" % args[2]]
                 if len(args) > 3 and args[3] == 'to':
                     try:
                         langTo = self.languages[args[4].lower()]
-                        if len(langTo) > 2:
-                            raise Exception()
                     except:
-                        return ["PRIVMSG $C$ :Translation failure! :("]
+                        return ["PRIVMSG $C$ :Translation failure! Is %s a valid language?" % args[4]]
             else:
                 text = ' '.join(args)
         else:
@@ -136,21 +131,21 @@ class pluginClass(plugin):
         ucontent = unicode(content, encoding)
 
         #Parse source language
-        sourceLanguage = re.search(',"(\w+)",,', ucontent)
+        sourceLanguage = re.search(',"([-a-zA-Z]+)",,', ucontent)
         if sourceLanguage is None:
             sourceLanguage = ''
         else:
             sourceLanguage = sourceLanguage.group(1)
-
-        if sourceLanguage in self.languages:
-            sourceLanguage = self.languages[sourceLanguage]
+        print "source:",sourceLanguage
+        if sourceLanguage in self.languagesInv:
+            sourceLanguage = self.languagesInv[sourceLanguage]
         else:
             sourceLanguage = ''
-            
+
         #Parse translation
         translation = re.search('\[\[\["(.+?)"', ucontent)
         if translation is None:
-            return ["PRIVMSG $C$ :Translation failure! :("]
+            return ["PRIVMSG $C$ :Translation failure! (Google Translate is being silly)"]
         translation = translation.group(1)
 
         if sourceLanguage != '':

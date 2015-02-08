@@ -19,9 +19,13 @@ class pluginClass(plugin):
             highest=highest[-1]
             for x in xrange(highest+1):
                 try:
-                    output=output.replace("$%s"%x,toFormat.split()[x])
-                except:
-                    print "formatter: Index failure"
+                    item = toFormat.split()[x]
+                    itemAndFollowing = toFormat.split()[x:]
+                    output=output.replace("$%d+"%x,' '.join(itemAndFollowing))
+                    output=output.replace("$%d"%x,item)
+                except Exception as e:
+                    print "formatter: Index failure %d" % x
+                    print e
         output=output.replace("$*",toFormat)
         return ["PRIVMSG $C$ :"+output]
     def describe(self, complete):

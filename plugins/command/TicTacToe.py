@@ -13,7 +13,7 @@ class TicTacToe(object):
 	def __init__(self,XUser,OUser):
 		self.board=[" "]*9
 		self.Users=[XUser,OUser]
-		
+
 	def setBit(self,where,what):
 		numbers="x678345012"
 		where=int(numbers[int(where)])
@@ -31,7 +31,7 @@ class TicTacToe(object):
 			if self.board[check[0]]==self.board[check[1]]==self.board[check[2]]:
 				if self.board[check[0]]!=" ":
 					finished=1
-				
+
 		return finished
 	def printState(self,turn):
 		board=self.board
@@ -42,14 +42,14 @@ class TicTacToe(object):
 			return self.Users[0]
 		else:
 			return self.Users[1]
-			
+
 class pluginClass(plugin):
 	def gettype(self):
 		return "command"
 	import random
 
 	def __init__(self):
-		self.currentGame=TicTacToe("PY","OMGbot")
+		self.currentGame=TicTacToe("sirxemic","OMGbot")
 		self.turn="X"
 		self.isDone=1
 	def action(self, complete):

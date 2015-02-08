@@ -11,9 +11,9 @@ class pluginClass(plugin):
         return 100
     def action(self, complete):
         msg=complete.message()
-        returns="Setting set, cap'n!"
         mode=plugin=setting=set=where=""
         mode=msg.split()[0]
+        returns="No such mode '%s'" % mode
         plugin=msg.split()[1]
         try:
             setting=msg.split()[2]
@@ -25,7 +25,7 @@ class pluginClass(plugin):
             set=""
         if len(set.split())<3:
             where = '1==1'
-        elif set.split()[-2]=="WHERE":
+        elif set.split()[-2].lower()=="where":
             where=set.split()[-1]
             set=' '.join(set.split()[:-2])
         else:
@@ -47,7 +47,7 @@ class pluginClass(plugin):
                 returns="Settings lost, comrade!"
             if mode=="list":
                 columns=settingsHandler.readColumns(plugin)
-                returns=', '.join(columns) 
+                returns=', '.join(columns)
             if mode=="current":
                 results=settingsHandler.readSetting(plugin, setting)
                 results=[str(x[0]) if len(x)==1 and type(x)==tuple else x for x in results] if type(results)==list else str(results)

@@ -47,7 +47,7 @@ def load_alias(name, plugin): #Loads an alias
         except:
             globalv.aliasExtensions.update({name:''})
 #Renames an alias, returns true on success and false on failure
-def rename_alias(name, newName): 
+def rename_alias(name, newName):
     if (name not in globalv.loadedAliases.keys()):
         return False
     if (newName in globalv.loadedAliases.keys()):

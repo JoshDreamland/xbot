@@ -9,8 +9,7 @@ import settingsHandler
 class pluginClass(plugin):
     def __init_db_tables__(self, name):
         settingsHandler.newTable(name, "nickname")
-        settingsHandler.writeSetting(name, "nickname","PY")
-        settingsHandler.writeSetting(name, "nickname","Silver_Skree")
+        settingsHandler.writeSetting(name, "nickname","sirxemic")
     def __init__(self):
         self.users=settingsHandler.readSettingRaw("autoidentifyd","nickname")
         self.users=[x[0] for x in self.users]

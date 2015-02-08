@@ -1,25 +1,16 @@
 # -*- coding: utf-8 -*-
 from plugins import plugin
-import globalv,random
+import globalv
 class pluginClass(plugin):
     def gettype(self):
         return "command"
     def action(self, complete):
         msg=complete.message()
-        colour="\x03"
-        msg2=u''
-        i=random.randint(3,12)
-
-        try:
-            msg = msg.decode('utf-8','replace')
-        except:
-            pass
-
-        for letter in msg:
-            msg2+=colour+str(i).rjust(2,"0")+letter
-            i= i+1 if i<12 else 3
-        result = "PRIVMSG $C$ :"+msg2+"\x03"
-        return [result]
+        parts = msg.split()
+        destination = parts[0]
+        command = parts[1].upper()
+        params = (' '.join(parts[2:])).decode('utf-8')
+        return ["PRIVMSG %s :\01%s %s\01" % (destination, command, params)]
     def describe(self, complete):
         msg=complete.message()
         sender=complete[0].split(' ')

@@ -5,6 +5,6 @@ class pluginClass(plugin):
     def gettype(self):
         return "command"
     def action(self, complete):
-        return ["PRIVMSG $C$ :$U$"]
+        return ["PRIVMSG $C$ :%s" % complete.user()]
     def describe(self, complete):
         return ["PRIVMSG $C$ :I am the !say module","PRIVMSG $C$ :Usage:","PRIVMSG $C$ :!say [input]"]

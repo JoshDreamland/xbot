@@ -21,11 +21,14 @@ class pluginClass(plugin):
         url = "http://safebooru.org/index.php?page=dapi&s=post&q=index&limit=200&"+query
 
         try:
-            req=urllib2.urlopen(url)
+            req=urllib2.urlopen(urllib2.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; rv:23.0) Gecko/20100101 Firefox/23.0'}))
         except urllib2.HTTPError as error:
             if '406' in str(error):
                 return ["PRIVMSG $C$ :Unacceptable input."]
             return ["PRIVMSG $C$ :Safebooru seems down!"]
+        except Exception as e:
+            print e
+            return ["PRIVMSG $C$ :ERROR: !animu threw an awful exception..."]
             
         content = req.read()
         matches = re.findall(r'file_url="(.+?)"(?:.+?)rating="(?:s|q)" tags="\s?(.+?)\s?" id="(\d+?)"', content)

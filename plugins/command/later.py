@@ -32,10 +32,13 @@ class pluginClass(plugin):
             return ["PRIVMSG $C$ :"+', '.join(returns)]
         elif command=="remove":
             try:
-                senderString="sender=='%s' AND "%complete.user()
-                if isAllowed(complete.userMask())>getLevel(complete.user()):
+                senderString=" and sender=='%s'"%complete.user()
+                if isAllowed(complete.userMask())>=150:
                     senderString=""
-                settingsHandler.updateSetting("laterd","sent", "'2'", where="recipient=\"%s\" and sent='0' and sender='%s'"%(re.escape(msg.split()[1].lower()), complete.user()))
+                where  = "recipient=%s and sent='0'" % repr(msg.split()[1].lower())
+                where += senderString
+                print where
+                settingsHandler.updateSetting("laterd","sent", "'2'", where=where)
                 return ["PRIVMSG $C$ :Later successfully removed!"]
             except Exception as detail:
                 return ["PRIVMSG $C$ :Later not removed"]
@@ -52,10 +55,12 @@ class pluginClass(plugin):
                 msg=' '.join(msg.split()[1:])
             channel='|'.join(channels)
             recipients=list(set(msg.split()[0].lower().split(',')))
+            recipients = [re.sub('[^0-9a-z-[\]*?]', '?', x) for x in recipients]
             sender=complete.user()
             senderMask=complete.userMask()
             timestamp=str(int(time.time()))
             message=' '.join(msg.split()[1:])
+            message = message.replace('$U$','$recipient$')
             for recipient in recipients:
                 print recipient
                 id=str(int(settingsHandler.readSetting("laterd", "COUNT(id)"))+1)

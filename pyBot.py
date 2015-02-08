@@ -8,6 +8,7 @@ import threading
 import difflib
 import Queue
 import os
+import errno
 sys.path.insert(0, "functions")
 sys.path.insert(0, os.path.join("plugins","realtime"))
 sys.path.insert(0, os.path.join("plugins","command"))
@@ -23,7 +24,7 @@ import time
 import random
 import security
 import pluginHandler
-import aliasHandler 
+import aliasHandler
 import securityHandler
 import settingsHandler
 import shlex
@@ -75,7 +76,7 @@ class asyncInput(object):
     def describe(self, complete):
         return ["PRIVMSG $C$ :I am the main IRC input module"]
 
-#Define local functions			
+#Define local functions
 def sendithread(msg):
     outputQueue.put(msg)
 def send(msg): #Sends the argument straight to the server
@@ -96,12 +97,12 @@ def send(msg): #Sends the argument straight to the server
             irc.send(msg.encode('utf-8') + "\r\n") #Yeah, I'm this lazy.
             if msg.split()[0] not in ["JOIN","WHOIS"] and msg.split(':',1)[-1].split()[0] not in ["\x01PING"]:
                 time.sleep(1)
-        except Exception as (errorNumber, error):
-            print "X-- Send Failure!"
-            print "X--",msg
-            print "X--",error
-            if errorNumber==32:
+        except IOError as error:
+            if error.errno == errno.EPIPE:
                 sys.exit(0)
+        except Exception as error:
+            print "X-- Send Failure!"
+            print "X--",error
         if starter!="":
             time.sleep(1)
             send(starter+omsg.decode('utf-8')) #Recursive function, because we shouldn't need too many iterations and it's quicker than a for loop.
@@ -132,15 +133,15 @@ def message(msg, chan): #Shorthand to send a message to a particular channel
 
 def parse(msg):
     arguments=pluginArguments(msg)
-    global load_plugin 
-    global unload_plugin 
-    global isAllowed 
-    global isBanned 
-    global load_alias 
-    global save_alias 
+    global load_plugin
+    global unload_plugin
+    global isAllowed
+    global isBanned
+    global load_alias
+    global save_alias
 
     if not isBanned(arguments):
-        if arguments.cmd()[0]=="reimportGlobalVariables" and arguments.user()=="PY":
+        if arguments.cmd()[0]=="reimportGlobalVariables" and arguments.user()=="sirxemic":
             reload(globalv)
             reload(pluginHandler)
             reload(aliasHandler)
@@ -216,10 +217,11 @@ if __name__=="__main__":
         load_plugin(plugin, loadAs)
     print "Loading aliases..."
     for line in settingsHandler.readSettingRaw("alias","aliasName, aliasPlugin, aliasArguments"):
+        print line
         load_alias(line[0], ' '.join(line[1:]))
     print "Loading input sources..."
     if settingsHandler.tableExists("'core-input'"):
-        for input in settingsHandler.readSettingRaw("'core-input'","input, definition"):
+        for input in []: #settingsHandler.readSettingRaw("'core-input'","input, definition"):
             if input[0] not in globalv.loadedInputs.keys():
                 x=__import__(str(input[1].split()[0]))
                 reload(x)
@@ -252,6 +254,7 @@ if __name__=="__main__":
             if globalv.input.getPrimaryProducerStatus()==False:
                 sys.exit(0)
             data = globalv.input.getInput()
+            print data
             for datum in data.split('\r\n')[0:-1]:
                 if datum[:1]!="#":
                     for plugin in globalv.loadedPreprocess.keys():

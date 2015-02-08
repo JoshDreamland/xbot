@@ -14,18 +14,29 @@ def fixXMLEntities(match):
     value=int(match.group()[2:-1])
     return chr(value)
 def parseYoutube(url, pageData):
-    if re.findall("watch\?.*?v=", url)!=[]:
-        print "Looking for title..."
-        title=re.findall("<\s*title\s*>[\s]*(.*?)</title\s*>", pageData, re.I)[0]
-        title = title.replace("YouTube","")
-        title = title.strip().strip("-").strip() #I KNOW I'M SORRY I'M SO SO SORRY
-        print "Looking for uploader..."
-        uploader = re.findall(r"user/(.*?)[?\"]", pageData, re.I)[0]
-        print uploader
-        print pageData.find('length_seconds')
-        length = re.findall(r"amp;length_seconds=([0-9]*)", pageData)[0]
-        print length
-        length = time.strftime("%M:%S", time.gmtime(int(length)))
+    if re.search("watch\?.*?v=", url) is not None:
+        print "Trying %s" % url
+        title=re.search("<title>(.*?) - YouTube</title>", pageData, re.I)
+        if title is None: title = '??'
+        else: title = title.group(1)
+        uploader=re.search('http://schema.org/Person">\s+<link itemprop="url" href="http://www.youtube.com/user/(.+?)"', pageData, re.I)
+        if uploader is not None: uploader = uploader.group(1)
+        else:
+            uploader = re.search('data-name="watch">([^<]+)</a><span class="yt-user-separator"', pageData)
+            if uploader is not None: uploader = uploader.group(1)
+            else: uploader = '??'
+        length_seconds = re.search('"length_seconds": (\d+)', pageData)
+        if length_seconds is None:
+            length = '??:??'
+        else:
+            length_seconds = int(length_seconds.group(1))
+            seconds = length_seconds % 60
+            minutes = (length_seconds / 60) % 60
+            hours = length_seconds / 3600
+            length = '%02d:%02d' % (minutes, seconds)
+            if hours > 0:
+                length = '%d:%s' % (hours, length)
+
         return ["PRIVMSG $C$ :Video: %s by %s (%s)"%(title.decode('utf-8'),uploader,length)]
     else:
         title=re.findall("<\s*title\s*>(.*?)</title\s*>", pageData, re.I)[0]
@@ -49,52 +60,15 @@ def parseAdfly(url, pageData):
         return ['PRIVMSG $C$ :Title: '+title.decode('utf-8')+ ' (at '+domain.decode('utf-8')+')']
     else:
         return ['PRIVMSG $C$ :Target URL: %s'%fullURL]
-def parsePonibooru(url, pageData):
-    print "Getting tags"
-    tags = re.findall("<textarea\s*?name='tag_edit__tags'.*?>(.*?)</textarea>", pageData)[0]
-    print "Stats"
-    stats = re.findall("<div id='Statisticsleft'>(.*?<)/div>", pageData)[0]
-    print "ID"
-    id = re.findall("Id:\s([0-9]*)", stats)[0]
-    print "Size"
-    size = re.findall("Size: (.+?)<", stats)[0].strip()
-    print "Filesize"
-    filesize = re.findall("Filesize: (.+?)<", stats)[0].strip()
-    print "Source"
-    source = re.findall("Source: <a href='(.+?)'", stats)
-    if (source != []):
-        source = source[0].strip()
-        if len(source) > 20:
-            source = bitly(source)
-    else:
-        source = ""
-    return ["PRIVMSG $C$ :Image Tags: %s; Dimensions: %s; Filesize: %s; %s"%(tags, size, filesize, "Source: %s;"%source if source!="" else "")]
-def parseBronibooru(url, pageData):
-    tags = re.findall('/post/index\?tags=([^"]*)', pageData)
-    numTags = len(tags)
-    tags = ', '.join(tags[:15])
-    more="" if numTags==len(tags) else " (%s tags ommitted)"%(numTags -15)
-    if (len(tags)>0):
-        return ["PRIVMSG $C$ :Image Tags: %s%s"%(tags, more)]
-    return [""]
-
-def parseFimF(url, pageData):
-    newUrl = "http://www.fimfiction.net/api/story.php?story=" + url
-    JSONString = urllib2.urlopen(newUrl).read()
-    storyData = json.loads(JSONString)
-
-    numChapters = len(storyData["story"]["chapters"])
-    return ["PRIVMSG $C$ :Story: %s by %s, %s words over %s chapter%s. %s views, %s/-%s rating; %s"%(storyData["story"]["title"], storyData["story"]["author"]["name"],storyData["story"]["words"], numChapters, "" if numChapters == 1 else "s", storyData["story"]["views"], storyData["story"]["likes"], storyData["story"]["dislikes"], storyData["story"]["short_description"])
-            ]
 
 class pluginClass(plugin):
+    headers = {
+        '.*soundcloud.com': {},
+        '.*youtube.com': {},
+        '': {"User-Agent":"Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11"}
+    }
     def __init__(self):
-        self.specialDomains={"http://www.youtube.com":parseYoutube, "http://adf.ly":parseAdfly,
-                "https?://[^.]*.deviantart.com":doNothing, "http://ponibooru.413chan.net":parsePonibooru, "http://www.ponibooru.org":parsePonibooru,
-                "http://bronibooru.mlponies.com":parseBronibooru,
-                "http://mylittlefacewhen.com":doNothing, "http://mlfw.info":doNothing,
-                "http://.*\.rainbow-da.sh":doNothing, "http://p.0au.de":doNothing, "http://.*\.4chan.org":doNothing,
-                "http://.*\.fimfiction.net":parseFimF}
+        self.specialDomains={"http://www.youtube.com":parseYoutube, "http://adf.ly":parseAdfly}
     def gettype(self):
         return "realtime"
     def __init_db_tables__(self, name):
@@ -129,20 +103,35 @@ class pluginClass(plugin):
                     if url[-2:]==")$":
                         url = url[:-2]
                     print url
-                    if url[-1]=="":
+                    if url[-1]=="\x01":
                         url=url[0:-1]
-                    if msg.split()[0]=="ACTION":
+                    if msg.split()[0]=="\x01ACTION":
                         return [""]
                     domain = re.search("(?P<url>https?://[^/\s]+)", url).group("url")
                     isDomain=re.findall("[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", domain)
                     if isDomain!=[]:
                         return [""]
+                    headers = self.headers['']
+                    for regex in self.headers:
+                        if regex == '': continue
+                        if re.match(regex, domain):
+                            headers = self.headers[regex]
                     try:
                         try:
-                            Req = urllib2.Request(url,None,{"User-Agent":"Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11", "From":"AHPhoshi@gmail.com"})
+                            print "using headers", headers
+                            Req = urllib2.Request(url,None,headers)
                             response=urllib2.urlopen(Req,None, 15)
-                            page=response.read(50000)
-                            page=page.replace('\n','')
+                            first_bytes = response.read(64)
+                            weird_byte_count = 0
+                            for c in first_bytes:
+                                if ord(c) < 32:
+                                    weird_byte_count += 1
+
+                            if weird_byte_count > 15:
+                                return
+
+                            page=first_bytes + response.read(800000)
+                            page=page.replace('\n','').replace('\r','')
                             fullURL=response.geturl()
                             #domain = re.search("(?P<url>https?://[^/\s]+)", fullURL).group("url")
 

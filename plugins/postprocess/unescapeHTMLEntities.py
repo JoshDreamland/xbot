@@ -15,10 +15,13 @@ class pluginClass(plugin):
                     # character reference
                     try:
                         if text[:3] == "&#x":
+                            code = re.search('$[0-9a-f]+', text[3:])
+                            if code:
+                                return repr(unichr(int(code.group(0), 16)))[2:-1]
                             return repr(unichr(int(text[3:-1], 16)))[2:-1]
                         else:
                             return repr(unichr(int(text[2:-1])))[2:-1]
-                    except ValueError:
+                    except Exception:
                         pass
                 elif text[:4]=="x26#":
                     return unichr(int(text[4:-1]))
@@ -28,12 +31,14 @@ class pluginClass(plugin):
                     # named entity
                     try:
                         text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
-                    except KeyError:
+                    except Exception:
                         pass
                 return text # leave as is
             text=re.sub("&#?\w+;", fixup, text)
             text=re.sub("x26#[0-9]+;", fixup, text)
             text=re.sub("\\\\u[0-9]+", fixup, text)
+            # Fix dangerous newlines
+            text=text.replace(u'\u2029',r'\u2029')
             return text
         return unescape(unescape(complete)) #Run twice because sometimes HTML identities get escaped - this isn't what we want.
     def describe(self, complete):

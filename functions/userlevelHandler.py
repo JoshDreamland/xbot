@@ -7,6 +7,7 @@ def getLevel(*pluginName):
             level=0
         else:
             level=int(level)
+        print "Level of plugin %s is %d" % (pluginName[0], level)
         return level
     except Exception as detail:
         print "An Exception Occured grabbing the user requirements for",pluginName,":"+str(detail)

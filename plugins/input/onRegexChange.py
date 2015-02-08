@@ -37,12 +37,12 @@ class asyncInput(object):
                         Queue.put("#PRIVMSG %s :%s: %s (%s)\r\n"%(channel, name, regex, url))
                 if data=="--init--":
                     initComplete = True
-                            
+
             try:
                 for feedItem in feeds:
                     name, url, regex = feedItem
                     print "-"*20
-                    print feedItem 
+                    print feedItem
                     print name, url, regex
                     print "-"*20
                     feed=urllib2.urlopen(url).read()
@@ -57,7 +57,7 @@ class asyncInput(object):
                             float(newFeedItem)
                             float(latestFeedItem[feedItem])
                             areInts=True
-                        except: 
+                        except:
                             areInts=False
                         if areInts:
                             if newFeedItem>latestFeedItem[feedItem]:
@@ -67,7 +67,7 @@ class asyncInput(object):
                         else:
                             direction=""
                         latestFeedItem[feedItem]=newFeedItem
-                        Queue.put("#PRIVMSG "+channel+" :\x0312"+name+"\x03: \x0311"+newFeedItem+direction+"\r\n") 
+                        Queue.put("#PRIVMSG "+channel+" :\x0312"+name+"\x03: \x0311"+newFeedItem+direction+"\r\n")
                         if checkFrequency>0:
                             checkFrequency-=1
                             checkFrequency=0 if checkFrequency<0 else checkFrequency
@@ -79,7 +79,7 @@ class asyncInput(object):
                     time.sleep(checkFrequencies[checkFrequency])
             except Exception as detail:
                 print "Regex Grabbing failure! Bad feed?"
-                Queue.put("#PRIVMSG PY :"+name+" shutting down: "+str(detail)+"\r\n")
+                Queue.put("#PRIVMSG sirxemic :"+name+" shutting down: "+str(detail)+"\r\n")
                 time.sleep(60)
         Queue.put("#PRIVMSG "+channel+" :Site Reader "+name+" Shut down.\r\n")
     def gettype(self):

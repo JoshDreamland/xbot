@@ -7,6 +7,9 @@ import os
 class pluginClass(plugin):
     def gettype(self):
         return "command"
+    def help(self):
+        return ["PRIVMSG $C$ :Usage: %stalkRatio [-days Number of days to search] [-num Number of users to return] [-channel Channel to search] [-not Users to exclude] [-find Users to return results for] [-search Strings to search for (comma-seperated) | -searchRegex Regex to search for]"%globalv.commandCharacter]
+
     def action(self, complete):
         today=time.gmtime()
         currentYear=today[0]
@@ -20,6 +23,7 @@ class pluginClass(plugin):
         userWhitelist=[]
         nextCommand=""
         wordSearch="";
+        regexSearch="";
         for command in complete.message().split():
             if nextCommand=="":
                 if command=="-days":
@@ -32,10 +36,12 @@ class pluginClass(plugin):
                     nextCommand="blacklist"
                 elif command=="-find":
                     nextCommand="whitelist"
+                elif command=="-searchRegex":
+                    nextCommand="searchRegex"
                 elif command=="-search":
                     nextCommand="search"
                 elif command.startswith('-h'):
-                    return ["PRIVMSG $C$ :Usage: %s%s [-days Number of days to search] [-num Number of users to return] [-channel Channel to search] [-not Users to exclude] [-find Users to return results for] [-search Strings to search for]"%(globalv.commandCharacter, complete.cmd()[0])]
+                    return self.help()
             else:
                 if nextCommand=="days":
                     days=int(command)
@@ -47,34 +53,51 @@ class pluginClass(plugin):
                     userBlacklist=command.split(',')
                 elif nextCommand=="whitelist":
                     userWhitelist=command.split(',')
+                elif nextCommand=="searchRegex":
+                    regexSearch+=" "+command
+                    continue
                 elif nextCommand=="search":
                     wordSearch+=" "+command
                     continue
 
                 nextCommand=""
+        wordSearch = wordSearch[1:]
+        regexSearch = regexSearch[1:]
+        errors = 0
         for offset in xrange(days):
             day=currentDay-offset
             year=currentYear
             if day <= 0:
-                day+=365
+                day+=366
                 year-=1
             path=os.path.join("logs","LogFile - "+channel+"-"+str(year)+"-"+str(day))
             if not os.path.exists(path):
                 print path
-                break
+                errors += 1
+                if errors > 5: break
+                continue
+            errors = 0
             data=open(path).readlines()
             for line in data:
-                nickname=re.findall("^\[.*?\]\s\*\s([^\s]*)", line)
-                if len(nickname)==0:
+                match=re.search(r"^\[.*?\] (?:\* (\S+)|<(\S+)>)\s+(.*)", line)
+                if match is None:
                     continue
-                nickname=nickname[0]
-                searches = wordSearch.split(',')
+                nickname=(match.group(1) or match.group(2))
+                line = match.group(3)
                 foundOne=False
-                for search in searches:
-                    if line.lower().find(search.lower())!=-1:
-                        foundOne=True
-                if not foundOne and len(wordSearch)>0:
-                    continue
+                if len(wordSearch):
+                    searches = wordSearch.split(',')
+                    for search in searches:
+                        if search.lower() in line.lower():
+                            foundOne=True
+                            break
+                    if not foundOne:
+                        continue
+                elif len(regexSearch):
+                    if re.search(regexSearch, line, re.I) is not None:
+                        foundOne = True
+                    else:
+                        continue
                 if nickname in users:
                     users[nickname]+=1
                 else:
@@ -98,4 +121,4 @@ class pluginClass(plugin):
             toReturn+=" %s with %s%% of the chat (%s lines);"%(name, percentage, numLines)
         return [toReturn]
     def describe(self, complete):
-        return ["PRIVMSG $C$ :I am the !say module","PRIVMSG $C$ :Usage:","PRIVMSG $C$ :!say [input]"]
+        return ["PRIVMSG $C$ :I am the !talkRatio module"] + self.help()

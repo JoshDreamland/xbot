@@ -42,19 +42,19 @@ class pluginClass(plugin):
             if msgType=="PRIVMSG":
                 if msg.split()[0]=="ACTION":
                     msg=' '.join(msg.split()[1:])[:-1]
+                    message="[%(time)d] * %(user)s %(umessage)s" % {"time":time.time(), "user":user,"umessage":msg}
                 else:
-                    msg="* "+msg
-                message="[%(time)s] * %(user)s %(umessage)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user,"umessage":msg}
+                    message="[%(time)d] <%(user)s> %(umessage)s" % {"time":time.time(), "user":user,"umessage":msg}
             if msgType=="JOIN":
-                message="[%(time)s] > %(user)s has joined" % {"time":time.strftime("%d %b %y %H:%M"), "user":userMask}
+                message="[%(time)d] -->| %(user)s has joined" % {"time":time.time(), "user":userMask}
             if msgType=="PART":
-                message="[%(time)s] < %(user)s has left" % {"time":time.strftime("%d %b %y %H:%M"), "user":userMask}
+                message="[%(time)d] <--| %(user)s has left" % {"time":time.time(), "user":userMask}
             if msgType=="KICK":
-                message="[%(time)s] < %(user)s kicked %(kicked)s: %(reason)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user, "kicked":complete[0].split()[3], "reason":complete[1]}
+                message="[%(time)d] =-= %(user)s kicked %(kicked)s: %(reason)s" % {"time":time.time(), "user":user, "kicked":complete[0].split()[3], "reason":complete[1]}
             if msgType=="MODE":
-                message="[%(time)s] = %(user)s set mode %(mode)s on %(person)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user, "mode":complete[0].split()[3], "person":', '.join(complete[0].split()[4:])}
+                message="[%(time)d] =-= %(user)s set mode %(mode)s on %(person)s" % {"time":time.time(), "user":user, "mode":complete[0].split()[3], "person":', '.join(complete[0].split()[4:])}
             if msgType=="TOPIC":
-                message="[%(time)s] = %(user)s changed the topic to: %(topic)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user, "topic":complete[1]}
+                message="[%(time)d] =-= %(user)s changed the topic to: %(topic)s" % {"time":time.time(), "user":user, "topic":complete[1]}
             if message!="":
                 file.write(message+"\n")
                 file.flush()
@@ -68,7 +68,7 @@ class pluginClass(plugin):
                             file=open(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7])),"a")
                         else:
                             file=open(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7])),"w")
-                        message="[%(time)s] < %(user)s has quit: %(reason)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":userMask,"reason":msg}
+                        message="[%(time)d] |<-- %(user)s has quit: %(reason)s" % {"time":time.time(), "user":userMask,"reason":msg}
                         file.write(message+"\n")
                         file.close()
             if msgType=="NICK":
@@ -81,7 +81,7 @@ class pluginClass(plugin):
                         file=open(os.path.join("logs","LogFile - "+channel+"-"+str(ttime[0]) + "-" + str(ttime[7])),"w")
                     user = complete[0].split()[0].split('!')[0]
                     newNick = complete[1]
-                    message="[%(time)s] = %(user)s is now known as %(newnick)s" % {"time":time.strftime("%d %b %y %H:%M"), "user":user,"newnick":newNick}
+                    message="[%(time)d] =-= %(user)s is now known as %(newnick)s" % {"time":time.time(), "user":user,"newnick":newNick}
                     file.write(message+"\n")
                     file.close()
         except Exception as detail:

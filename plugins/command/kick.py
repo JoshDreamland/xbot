@@ -12,16 +12,15 @@ class pluginClass(plugin):
         return 100
     def action(self, complete):
         msg=complete.message()
-        if isAllowed(complete.userMask())>=getLevel(complete.cmd()[0]):
-            kickMessage=' '.join(msg.split()[1:])
-            if kickMessage=="":
-                kickMessage="Go away."
-            toKick=["KICK $C$ "+msg.split()[0]+" :"+kickMessage]
+	kickee = msg.split()[0]
+        kickMessage=' '.join(msg.split()[1:])
+	if kickMessage=="":
+	    kickMessage="Go away."
+        print "kickee", kickee, "user", complete.user(), "allowed", isAllowed(complete.userMask()), "cmd/level", complete.cmd()[0], getLevel(complete.cmd()[0])
+        if kickee == '$U$' or kickee == complete.user() or isAllowed(complete.userMask())>=getLevel('kick'):
+            toKick=["KICK $C$ "+kickee+" :"+kickMessage]
             return toKick
         else:
-            kickMessage=' '.join(msg.split()[1:])
-            if kickMessage=="":
-                kickMessage="Go away."
-            return ["PRIVMSG $C$ :ACTION kicks "+msg.split()[0]+" in the shin (%s)"%kickMessage]
+            return ["PRIVMSG $C$ :ACTION kicks "+kickee+" in the shin (%s)"%kickMessage]
     def describe(self, complete):
         return ["PRIVMSG $C$ :I am the !kick module","PRIVMSG $C$ :Usage: (Requires Elevated Bot Privileges)","PRIVMSG $C$ :!kick [user]"]

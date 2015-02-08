@@ -4,6 +4,8 @@ if __name__!="__main__":
 import traceback
 class pluginArguments(object):
     def __init__(self, content):
+        if isinstance(content, unicode):
+            content = content.encode('utf-8')
         self.argument=content
     def message(self):
         try:
@@ -61,7 +63,7 @@ class pluginArguments(object):
         self.argument=complete
 
 if __name__=="__main__":
-    args=pluginArguments(":PY!apycalling@py.py PRIVMSG #sr388 :!ping")
+    args=pluginArguments(":herpderp!herpderpa@abc.def PRIVMSG #sr388 :!ping")
     print args.user(), "said", args.message(), "in", args.channel()
     print args.userMask(), "is their hostmask, and the message type was a", args.type()
     print args.cmd()

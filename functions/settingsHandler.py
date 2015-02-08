@@ -48,7 +48,7 @@ def writeSetting(table, settings, values):
     rows=[]
     if type(values) is list:
         for value in values:
-            rows.append('"'+value.replace('"','""')+'"')
+            rows.append('"'+str(value).replace('"','""')+'"')
         values=', '.join(rows)
     else:
         values='"'+values+'"'
@@ -68,7 +68,7 @@ def newTable(table,*args):
         arguments.append(arg)
     arguments=', '.join(arguments)
     args={"table":table,"arguments":arguments}
-    c.execute('''CREATE TABLE %(table)s 
+    c.execute('''CREATE TABLE %(table)s
     (%(arguments)s)'''%args)
     db.commit()
 def dropTable(table):

@@ -7,20 +7,24 @@ import urllib
 import multiprocessing
 import time
 import WordScramble
-from random import random, randint, shuffle
+from random import random, randint, shuffle, choice
 import ast
 import re
+import hashlib
+import itertools
 finished=False
-safe_list = ['random','math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', 'de grees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh','int','bin','oct','hex'] #use the list to filter the local namespace 
+safe_list = ['random','math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', 'de grees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh','int','bin','oct','hex'] #use the list to filter the local namespace
 safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ]) #add any needed builtins back in.
-safe_dict['abs'] = abs 
+safe_dict['abs'] = abs
 reload(WordScramble)
 safe_dict['scramble']=WordScramble.scramble
+safe_dict['list']=list
 safe_dict['hex']=hex
 safe_dict['int']=int
 safe_dict['map']=map
 safe_dict['filter']=filter
 safe_dict['zip']=zip
+safe_dict['time']=time.time
 safe_dict['max']=max
 safe_dict['oct']=oct
 safe_dict['bin']=bin
@@ -29,6 +33,7 @@ safe_dict['chr']=chr
 safe_dict['True']=True
 safe_dict['False']=False
 safe_dict['randint']=randint
+safe_dict['choice']=choice
 safe_dict['reduce']=reduce
 safe_dict['factorial']=factorial
 safe_dict['set']=set
@@ -36,7 +41,10 @@ safe_dict['str']=str
 safe_dict['sorted']=sorted
 safe_dict['sum']=sum
 safe_dict['range']=xrange
+safe_dict['ord']=ord
 safe_dict['urlescape']=urllib.quote
+safe_dict['permutations']=itertools.permutations
+safe_dict['combinations']=itertools.combinations
 def notInPlaceShuffle(list):
     shuffle(list)
     return list
@@ -143,6 +151,26 @@ def isprime(x):
         while not isprime(c): # should help reduce execution time for large numbers
             c += 1
     return True
+
+def md5(x):
+    return hashlib.md5(x).hexdigest()
+def sha1(x):
+    return hashlib.sha1(x).hexdigest()
+def sha224(x):
+    return hashlib.sha224(x).hexdigest()
+def sha256(x):
+    return hashlib.sha256(x).hexdigest()
+def sha384(x):
+    return hashlib.sha384(x).hexdigest()
+def sha512(x):
+    return hashlib.sha512(x).hexdigest()
+safe_dict['md5'] = md5
+safe_dict['sha1'] = sha1
+safe_dict['sha224'] = sha224
+safe_dict['sha256'] = sha256
+safe_dict['sha384'] = sha384
+safe_dict['sha512'] = sha512
+
 safe_dict['factorise']=factorize
 safe_dict['isprime']=isprime
 safe_dict['bite']=bite
@@ -160,11 +188,14 @@ def convertBitsToFloat(msg):
     return msg
 import ast
 def evaluate(msg, output):
-    rawStr = "%r"%msg
+    rawStr = msg
     print rawStr
     newDict = safe_dict.copy()
     newDict.update(globalv.variables)
-    output.put(("%r"%(str(eval(msg,{"__builtins__":None},newDict))))[1:-1])
+    result = str(eval(msg,{"__builtins__":None},newDict))
+    print result
+    result = result.replace('\r',r'\r').replace('\n',r'\n')
+    output.put(result)
 
 class pluginClass(plugin):
     def gettype(self):

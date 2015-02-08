@@ -8,7 +8,7 @@ def isAllowed(nick):
                 if type(userlevel) == list:
                     userlevel = userlevel[0][0]
                 return int(userlevel)
-    except: 
+    except:
         print mask
         print nick
     return 0
@@ -38,7 +38,7 @@ def isBanned(complete):
             try:
                 if re.match("^"+line.rstrip()+"$", globalv.miscVars[0][nick],re.I)!=None:
                     return 1
-                
+
             except Exception as detail:
                 print "There is an invalid entry in your ignorance list"
                 with open("crashLog.txt","a") as file:

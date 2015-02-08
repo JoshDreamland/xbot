@@ -6,9 +6,10 @@ class pluginClass(plugin):
     def gettype(self):
         return "realtime"
     def action(self, complete):
+        print complete.fullMessage()
         if complete.type()=="PRIVMSG" and complete.channel()[0]!="#":
             if complete.fullMessage()=="\001TIME\001":
-                timeString=time.strftime("%H:%M - %d/%m/%Y")
+                timeString=time.strftime("%Y-%m-%d %H:%M:%S (%Z)")
                 return ["NOTICE $C$ :\001TIME "+timeString+"\001"]
             elif complete.fullMessage()=="\001VERSION\001":
                 return ["NOTICE $C$ :\001VERSION OMGbot version 2\001"]

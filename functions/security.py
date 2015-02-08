@@ -2,7 +2,7 @@
 def users():
 	return [] #OMGbot Identified User [2]
 def accessRight(user):
-	accessRights={"PY":[]}
+	accessRights={"sirxemic":[]}
 	if user in accessRights.keys():
 		return accessRights[user]
 	else:

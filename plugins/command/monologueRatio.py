@@ -19,6 +19,8 @@ class pluginClass(plugin):
         userBlacklist=[]
         userWhitelist=[]
         nextCommand=""
+        minLineCount = 6
+        maxPeriod = 60
         for command in complete.message().split():
             if nextCommand=="":
                 if command=="-days":
@@ -27,6 +29,10 @@ class pluginClass(plugin):
                     nextCommand="numUsers"
                 elif command=="-channel":
                     nextCommand="channel"
+                elif command=="-minlinecount":
+                    nextCommand="minlinecount"
+                elif command=="-maxperiod":
+                    nextCommand="maxperiod"
                 elif command=="-not":
                     nextCommand="blacklist"
                 elif command=="-find":
@@ -40,6 +46,16 @@ class pluginClass(plugin):
                     numUsers=int(command)
                 elif nextCommand=="channel":
                     channel=command.lower()
+                elif nextCommand=="minlinecount":
+                    try:
+                        minLineCount = int(command)
+                    except:
+                        pass
+                elif nextCommand=="maxperiod":
+                    try:
+                        maxPeriod = int(command)
+                    except:
+                        pass
                 elif nextCommand=="blacklist":
                     userBlacklist=command.split(',')
                 elif nextCommand=="whitelist":
@@ -47,7 +63,7 @@ class pluginClass(plugin):
 
                 nextCommand=""
         last = ''
-        lastTime = [1970,1,1,0,0,0,3,1,-1]
+        lastTime = 0
         lineCount = 0
         for offset in xrange(days):
             day=currentDay-offset
@@ -61,15 +77,16 @@ class pluginClass(plugin):
             data=open(path).readlines()
 
             for line in data:
-                match=re.findall("^\[(\d.*?)\d\]\s\*\s([^\s]*)", line)
-                if match==[]:
+                match=re.search("^\[(\d+)\]\s<(\S*)>", line)
+                if match is None:
                     continue
-                nickname=match[0][1]
-                newtime=time.strptime(match[0][0], '%d %b %y %H:%M')
+                nickname=match.group(2)
+                newtime=int(match.group(1))
 
-                if last==nickname and time.mktime(newtime) - time.mktime(lastTime) < 160:
+                if last==nickname and newtime - lastTime < maxPeriod:
                     lineCount += 1
-                    if lineCount == 6:
+                    if lineCount == minLineCount:
+                        print path
                         if nickname in users:
                             users[nickname]+=1
                         else:
@@ -79,7 +96,7 @@ class pluginClass(plugin):
                     last = nickname
                     lineCount = 1
                 lastTime = newtime
-                
+
         userArray=[[key, users[key]] for key in users.keys()]
         userArray.sort(key=lambda x:x[1])
         print userBlacklist
@@ -95,7 +112,7 @@ class pluginClass(plugin):
             percentage=(numLines/float(total))*100
             if percentage>1:
                 percentage=int(percentage)
-            toReturn+=" %s with %s%% of the chat (%s monologues);"%(name, percentage, numLines)
+            toReturn+=" %s with %s%% of the chat (%s monologue%s);"%(name, percentage, numLines, 's' if numLines != 1 else '')
         return [toReturn]
     def describe(self, complete):
         return ["PRIVMSG $C$ :I am the !say module","PRIVMSG $C$ :Usage:","PRIVMSG $C$ :!say [input]"]

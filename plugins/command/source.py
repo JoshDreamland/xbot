@@ -19,9 +19,9 @@ class pluginClass(plugin):
                         break
             if readFile=="":
                 return ["PRIVMSG $C$ :No plugin by that name exists - are you trying to source an alias?"]
-            data={"paste_code":readFile}
+            data={"content":readFile, "title":msg, "filetype":"py"}
             data=urllib.urlencode(data)
-            req = urllib2.Request("http://pastebin.com/api_public.php", data)
+            req = urllib2.Request("http://bilberry.speedycloud.co.uk/p/upload/", data)
             response = urllib2.urlopen(req)
             msg=response.read()
             return ["PRIVMSG $C$ :"+msg]
