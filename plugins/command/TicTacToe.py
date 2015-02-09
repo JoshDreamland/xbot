@@ -49,7 +49,7 @@ class pluginClass(plugin):
 	import random
 
 	def __init__(self):
-		self.currentGame=TicTacToe("sirxemic","OMGbot")
+		self.currentGame=TicTacToe(globalv.owner, globalv.nickname)
 		self.turn="X"
 		self.isDone=1
 	def action(self, complete):

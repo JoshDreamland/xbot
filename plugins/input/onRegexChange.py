@@ -79,7 +79,7 @@ class asyncInput(object):
                     time.sleep(checkFrequencies[checkFrequency])
             except Exception as detail:
                 print "Regex Grabbing failure! Bad feed?"
-                Queue.put("#PRIVMSG sirxemic :"+name+" shutting down: "+str(detail)+"\r\n")
+                Queue.put("#PRIVMSG "+globalv.owner+" :"+name+" shutting down: "+str(detail)+"\r\n")
                 time.sleep(60)
         Queue.put("#PRIVMSG "+channel+" :Site Reader "+name+" Shut down.\r\n")
     def gettype(self):

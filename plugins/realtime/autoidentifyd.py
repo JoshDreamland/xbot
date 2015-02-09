@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-#[11 May 10 11:12] * James * Hi everyone
+# [11 May 10 11:12] * James * Hi everyone
+# [08 Feb 15 19:21] * JoshDreamland * WHAT IS GOING ON IN HERE
 from plugins import plugin
 import globalv
 import time
@@ -9,7 +10,7 @@ import settingsHandler
 class pluginClass(plugin):
     def __init_db_tables__(self, name):
         settingsHandler.newTable(name, "nickname")
-        settingsHandler.writeSetting(name, "nickname","sirxemic")
+        settingsHandler.writeSetting(name, "nickname", globalv.owner)
     def __init__(self):
         self.users=settingsHandler.readSettingRaw("autoidentifyd","nickname")
         self.users=[x[0] for x in self.users]
@@ -17,8 +18,11 @@ class pluginClass(plugin):
     def gettype(self):
         return "realtime"
     def action(self, complete):
-        idMessages=["identified for this nick","a registered nick","a registered nick"]
-        if complete.user() in self.users and ".*!"+complete.userMask().split('!')[1] not in [x[0] for x in globalv.miscVars[2]]:
+        idMessages = ["identified for this nick",
+            "a registered nick", "a registered nick"]
+        if complete.user() in self.users and (".*!"
+                + complete.userMask().split('!')[1]
+                    not in [x[0] for x in globalv.miscVars[2]]):
             if complete.user() not in self.giveup.keys():
                     self.giveup[complete.user()]=0
             if self.giveup[complete.user()]<=0:
@@ -29,10 +33,15 @@ class pluginClass(plugin):
         if complete.complete().split()[1]=="JOIN":
             return ["WHOIS %s"%complete.user()]
         if complete.complete().split()[1] in ["330","307"]:
-            level=settingsHandler.readSetting("autoidentifyd","level",where="nickname='%s'"%complete.complete()[1:].split(':')[0].split()[3])
+            level=settingsHandler.readSetting("autoidentifyd", "level",
+                where="nickname='%s'" % complete.complete()[1:]
+                    .split(':')[0].split()[3])
             level="1" if level==[] else level
-            if (".*!"+globalv.miscVars[0][complete.complete()[1:].split(':')[0].split()[3]],level) not in globalv.miscVars[2]:
-                globalv.miscVars[2].append((".*!"+globalv.miscVars[0][complete.complete()[1:].split(':')[0].split()[3]],level))
+            if (".*!" + globalv.miscVars[0][complete.complete()[1:]
+                   .split(':')[0].split()[3]], level) not in globalv.miscVars[2]:
+                globalv.miscVars[2].append((".*!"
+                    + globalv.miscVars[0][complete.complete()[1:]
+                        .split(':')[0].split()[3]],level))
         elif complete.complete().split()[1]=="353":
             returns=[]
             for name in complete.message().split():
@@ -49,4 +58,5 @@ class pluginClass(plugin):
         msg=complete.message()
         sender=complete[0].split(' ')
         sender=sender[2]
-        return ["PRIVMSG $C$ :I am the logging module","PRIVMSG $C$ :Usage:","PRIVMSG $C$ :I log your text so I can use it for nefarious means."]
+        return ["PRIVMSG $C$ :I am the logging module", "PRIVMSG $C$ :Usage:",
+            "PRIVMSG $C$ :I log your text so I can use it for nefarious means."]

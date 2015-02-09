@@ -50,6 +50,7 @@ port=int(settingsHandler.readSetting("core","port"))
 
 #update global variables
 globalv.nickname=nickname
+globalv.owner=owner
 
 #IRC protocol message type constants
 privmsg="PRIVMSG"
@@ -141,7 +142,7 @@ def parse(msg):
     global save_alias
 
     if not isBanned(arguments):
-        if arguments.cmd()[0]=="reimportGlobalVariables" and arguments.user()=="sirxemic":
+        if arguments.cmd()[0]=="reimportGlobalVariables" and arguments.user()==owner:
             reload(globalv)
             reload(pluginHandler)
             reload(aliasHandler)

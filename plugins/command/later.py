@@ -43,12 +43,12 @@ class pluginClass(plugin):
             except Exception as detail:
                 return ["PRIVMSG $C$ :Later not removed"]
         else:
-            msg=msg.replace('::',' ')
-            if msg.split()[0]=="secret":
-                anonymous="1"
-                msg=' '.join(msg.split()[1:])
-            else:
-                anonymous="0"
+            anonymous = "0"
+            secret_pfx = "secret::"
+            if msg.startswith(secret_pfx):
+                anonymous = "1"
+                msg = msg[len(secret_pfx):]
+            
             channels=[]
             while msg.split()[0][0]=="#":
                 channels.append(msg.split()[0])

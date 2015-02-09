@@ -11,7 +11,7 @@ class pluginClass(plugin):
         for u in globalv.timeUsers:
             if u.lower() == user:
                 return globalv.timeUsers[u]
-        return "sirxemic"
+        return globalv.owner
 
     def action(self, complete):
         if complete.type()=="NOTICE" and complete.fullMessage().split()[0]=="TIME":

@@ -31,6 +31,7 @@ def load_plugin(input, loadAs=""): #Loads a plugin, placing it in it's correct c
         globalv.loadedPostprocess.update({name:y})
     globalv.aliasExtensions.update({name:''})
     if settingsHandler.tableExists(name)==0:
+        print 'Initializing tables for plugin "' + name + '"';
         y.__init_db_tables__(name)
     if name not in [x[0] for x in settingsHandler.readSetting("'core-userlevels'", "plugin")]:
         settingsHandler.writeSetting("'core-userlevels'", ["plugin", "level"],[name, str(y.__level__())])

@@ -1,6 +1,7 @@
 import settingsHandler
 import pickle
 import os
+
 def createDatabase():
     settingsHandler.newTable("core", "nickname", "password", "owner", "server", "port")
     newName = raw_input("Bot Name? ")
@@ -25,7 +26,6 @@ def createDatabase():
     settingsHandler.newTable("coreSettings", "verboseAutoComplete")
     settingsHandler.writeSetting("coreSettings", ["verboseAutoComplete"], ["True"])
     settingsHandler.writeSetting("autoidentifyd", ["nickname", "level"], [newOwner, "1000"])
-
 
 def createVariables():
     with open(os.path.join("config","variables"),'w') as file:
