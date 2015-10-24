@@ -45,7 +45,11 @@ okToSend=False
 nickname=settingsHandler.readSetting("core","nickname")
 password=settingsHandler.readSetting("core","password")
 owner=settingsHandler.readSetting("core","owner")
-server=settingsHandler.readSetting("core","server")
+servers=[settingsHandler.readSetting("core","server"),
+  "morgan.freenode.net",
+  "asimov.freenode.net",
+  "weber.freenode.net",
+  "adams.freenode.net"]
 port=int(settingsHandler.readSetting("core","port"))
 
 #update global variables
@@ -241,10 +245,15 @@ if __name__=="__main__":
     #outputThread=threading.Thread(target=asyncOutput, args=(outputQueue,))
     #outputThread.start()
     #initialise connection
-    irc = socket.socket (socket.AF_INET,socket.SOCK_STREAM) #Initialise the socket prior to connection
-    irc.settimeout(380)#So we time-out when we time-out.
-    print "Connecting to %s:%s..."%(server, port)
-    irc.connect ((server,port)) #Connect!
+    for server in servers:
+      irc = socket.socket (socket.AF_INET, socket.SOCK_STREAM) #Initialise the socket prior to connection
+      irc.settimeout(380)#So we time-out when we time-out.
+      print "Connecting to %s:%s..."%(server, port)
+      try:
+        irc.connect ((server,port)) #Connect!
+      except:
+        continue
+      break
     #irc.recv(4096) #Grab the hostname auth message to assure connection was successful.
     print "Connection Succesful!"
     globalv.input.startInputDaemons()
