@@ -1,3 +1,6 @@
 OMGbot.cbp
 config/
 *.pyc
+logs/
+autoCommands.dat
+crashLog.txt
