@@ -31,7 +31,7 @@ class pluginClass(plugin):
                 [ "id", "recipient", "sender", "senderMask", "timestamp",
                     "message", "channel", "anonymous",  "sent"],
                 [ id,    recipient,   sender,   senderMask,   timestamp,
-                    message, "", "0", "0"])
+                    "dispatch " + message, "", "0", "0"])
             settingsHandler.db.commit()
         msg = ', '.join(recipients[:-1]) + ((" and " + recipients[-1]
             if len(recipients) > 1 else recipients[-1])

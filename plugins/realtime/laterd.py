@@ -8,20 +8,7 @@ from pluginFormatter import formatOutput, formatInput
 import time
 import sys
 import traceback
-def getMessage(id):
-    return settingsHandler.readSetting("laterd","message",where="id='%s'"%id)
-def getRecipient(id):
-    return settingsHandler.readSetting("laterd","recipient",where="id='%s'"%id)
-def getSender(id):
-    return settingsHandler.readSetting("laterd","sender",where="id='%s'"%id)
-def getSenderMask(id):
-    return settingsHandler.readSetting("laterd","senderMask",where="id='%s'"%id)
-def getTimestamp(id):
-    return datetime.datetime.fromtimestamp(int(settingsHandler.readSetting("laterd","timestamp",where="id='%s'"%id)))
-def getAnonymous(id):
-    return settingsHandler.readSetting("laterd","anonymous",where="id='%s'"%id)=="1"
-def correctChannel(id, channel):
-    messageChannel=settingsHandler.readSetting("laterd", "channel", where="id='%s'"%id)
+def correctChannel(messageChannel, channel):
     return (channel.lower() in [messageC.lower() for messageC in messageChannel.split('|')] or messageChannel=="")
 def setMessageSent(id):
     print "Attempting to set complete"
@@ -73,26 +60,40 @@ class pluginClass(plugin):
         if complete.type()!="PRIVMSG":
             return [""]
         returns=[]
-        messages=settingsHandler.readSettingRaw("laterd","id",where="('%s' GLOB recipient OR recipient GLOB '*|%s|*' OR recipient GLOB '%s|*' OR recipient GLOB '*|%s') AND sent='0'" % (user.lower(), user.lower(), user.lower(), user.lower()))
+        messages=settingsHandler.readSettingRaw("laterd","id,sender,senderMask,timestamp,message,channel,anonymous",where="('%s' GLOB recipient OR recipient GLOB '*|%s|*' OR recipient GLOB '%s|*' OR recipient GLOB '*|%s') AND sent='0'" % (user.lower(), user.lower(), user.lower(), user.lower()))
         if messages!=[]:
+            dispatches=[]
+
             for message in messages:
                 wipeMessage=True
 
                 messageID=str(message[0])
+                sender=message[1]
+                senderMask=message[2]
+                timestamp=datetime.datetime.fromtimestamp(int(message[3]))
+                messageText=message[4]
+                messageChannel=message[5]
+                anonymous=message[6]=="1"
+                if not correctChannel(messageChannel, complete.channel()):
+                    continue
+
                 try:
-                    sender=getSender(messageID)
-                    senderMask=getSenderMask(messageID)
-                    timestamp=getTimestamp(messageID)
-                    messageText=getMessage(messageID)
                     plugin=messageText.split()[0]
-                    if not correctChannel(messageID, complete.channel()):
-                        continue
                     messageTextNew = messageText
+                    messageTextNew = messageTextNew.replace('$recipient$', user)
+                    messageTextNew = messageTextNew.replace('$*$', complete.fullMessage().decode('utf-8'))
+
+                    if plugin=="dispatch":
+                        senderName=""
+                        if not anonymous:
+                            senderName=sender
+                        dispatches.append("%s: [%s] <%s>: %s" % (user, GetTimeUntilDatetime(timestamp), senderName, ' '.join(messageTextNew.split(' ')[1:])))
+                        setMessageSent(messageID)
+                        continue
+
                     if plugin not in globalv.loadedPlugins.keys():
                         plugin = 'say'
                         messageTextNew = 'say ' + messageTextNew
-                    messageTextNew = messageTextNew.replace('$recipient$', user)
-                    messageTextNew = messageTextNew.replace('$*$', complete.fullMessage().decode('utf-8'))
                     arguments=pluginArguments(':'+senderMask+" PRIVMSG "+complete.channel()+" :!"+messageTextNew)
                     arguments=formatInput(arguments)
                     try:
@@ -109,7 +110,7 @@ class pluginClass(plugin):
                             location=msg.split()[1]
                         else:
                             location="$C$"
-                        if not getAnonymous(messageID):
+                        if not anonymous:
                             returns.append("PRIVMSG "+location+" :From "+sender+" to "+user+" "+GetTimeUntilDatetime(timestamp))
                     if wipeMessage:
                         setMessageSent(messageID)
@@ -119,6 +120,12 @@ class pluginClass(plugin):
                     print "There was an error in one of the later messages:",detail
                     traceback.print_tb(sys.exc_info()[2])
                     setMessageSent(messageID)
+
+            target="$C$"
+            if len(dispatches) > 1:
+                target=user
+                returns.append("PRIVMSG $C$ :%s: Messages incoming" % user)
+            returns += ["PRIVMSG %s :%s" % (target, dispatch) for dispatch in dispatches]
 
         return returns
     def describe(self, complete):
