@@ -12,7 +12,11 @@ class pluginClass(plugin):
         return "command"
     def __append_seperator__(self):
         return True
+    def __level__(self):
+        return 1
     def action(self, complete):
+        if not (isAllowed(complete.userMask())>=getLevel(complete.cmd()[0])):
+            return [""]
         msg = complete.message().strip()
         firstspace = msg.index(' ')
         message = msg[firstspace+1:]
