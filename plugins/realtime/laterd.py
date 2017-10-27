@@ -50,6 +50,12 @@ def GetTimeUntilDatetime(toDiff):
         retString += " ago"
     return retString
 
+def readAllActions(user):
+    return settingsHandler.readSettingRaw(
+        "laterd", "id,sender,senderMask,timestamp,message,channel,anonymous",
+        where="('%s' GLOB recipient OR recipient GLOB '*|%s|*' OR recipient GLOB '%s|*' OR recipient GLOB '*|%s') AND sent='0'" % (user.lower(), user.lower(), user.lower(), user.lower()))
+
+
 class pluginClass(plugin):
     def gettype(self):
         return "realtime"
@@ -60,7 +66,15 @@ class pluginClass(plugin):
         if complete.type()!="PRIVMSG":
             return [""]
         returns=[]
-        messages=settingsHandler.readSettingRaw("laterd","id,sender,senderMask,timestamp,message,channel,anonymous",where="('%s' GLOB recipient OR recipient GLOB '*|%s|*' OR recipient GLOB '%s|*' OR recipient GLOB '*|%s') AND sent='0'" % (user.lower(), user.lower(), user.lower(), user.lower()))
+
+        messages = readAllActions(user);
+        if (user.lower() == "joshdreamland"):
+            messages += readAllActions("josh");
+       	if (user.lower() == "ismavatar"):
+            messages += readAllActions("ism");
+       	if (user.lower() == "goombert"):
+            messages += readAllActions("robert");
+
         if messages!=[]:
             dispatches=[]
 
