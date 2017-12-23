@@ -35,9 +35,9 @@ class SearchManager:
 
     def performSearch(self, line):
         for pred in self.search_predicates:
-            if not pred(line):
-                return False
-        return True
+            if pred(line):
+                return True
+        return False
 
     def searchFile(self, fullpath, abbrpath, filename):
         for pred in self.file_predicates:
@@ -195,6 +195,8 @@ def fun_url(args, mgr):
     if displayed_result and mgr.repo == displayed_result.repo:
         res = 'https://github.com/%s/blob/master/%s' % (
                 displayed_result.repo, displayed_result.path)
+        if displayed_result.lineno:
+            res += "#L%s" % displayed_result.lineno
         if len(args) > 1 and len(search_results) > 1:
             res += " (and %s other results; try a grep with f:filename)" % (
                     len(search_results) - 1)
@@ -209,7 +211,7 @@ def fun_grepfiles(args):
     if not results_by_relevance:
         return "No matching files. Try a different search."
     if len(args):
-        return "I don't know what to do with the arguments you specified.  " + args[0]
+        return "I don't know what to do with the arguments you specified."
     i = 0
     res = ""
     while i < 10 and i < len(results_by_relevance):
@@ -218,6 +220,20 @@ def fun_grepfiles(args):
                           results_by_relevance[i].count)
         i += 1
     return res
+
+def fun_grepnextfile(args):
+    global search_results, current_result, displayed_result
+    if len(args):
+        return "I don't know what to do with the arguments you specified."
+    if not displayed_result or not current_result:
+        return "Try doing a search, first."
+    fnf = current_result
+    while fnf < len(search_results):
+        if search_results[fnf].path != displayed_result.path:
+            current_result = fnf
+            return nextResult()
+        fnf += 1
+    return "No more matching files."
 
 enigma_manager = SearchManager('enigma-dev/enigma-dev')
 lgm_manager = SearchManager('IsmAvatar/LateralGM')
@@ -228,10 +244,13 @@ commandTable = {
   'eurl':  (lambda args: fun_url(args, enigma_manager)),
   'lurl':  (lambda args: fun_url(args, lgm_manager)),
   'grepfiles': fun_grepfiles,
+  'grepnextfile': fun_grepnextfile,
   'grepnext': (lambda ignore: nextResult())
 }
 
 def errorOut(cmd):
+    if cmd == 'codesearch':
+        return lambda dc: "Hello; I search code. " + basicHelp()
     return lambda dc: "This is not a zero-configuration plugin. Unknown alias '%s'." % cmd
 
 def basicHelp():
