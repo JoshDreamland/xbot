@@ -153,6 +153,7 @@ def nextResult():
     if search_results == None:
         return "Try doing a search first with, eg, !egrep"
     if (len(search_results) < 1):
+        displayed_result = None
         return "Search had no results...."
     if (len(search_results) <= current_result):
         return "No more results."
@@ -244,6 +245,7 @@ commandTable = {
   'eurl':  (lambda args: fun_url(args, enigma_manager)),
   'lurl':  (lambda args: fun_url(args, lgm_manager)),
   'grepfiles': fun_grepfiles,
+  'nextfile': fun_grepnextfile,
   'grepnextfile': fun_grepnextfile,
   'grepnext': (lambda ignore: nextResult())
 }

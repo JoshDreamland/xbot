@@ -61,6 +61,10 @@ def parseAdfly(url, pageData):
     else:
         return ['PRIVMSG $C$ :Target URL: %s'%fullURL]
 
+def isIgnored(sender):
+    name = sender.lower()
+    return name == "travis-ci"
+
 class pluginClass(plugin):
     headers = {
         '.*soundcloud.com': {},
@@ -68,7 +72,15 @@ class pluginClass(plugin):
         '': {"User-Agent":"Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11"}
     }
     def __init__(self):
-        self.specialDomains={"http://www.youtube.com":parseYoutube, "http://adf.ly":parseAdfly}
+        self.specialDomains={
+          "http://www.youtube.com":  parseYoutube,
+          "https://www.youtube.com": parseYoutube,
+          "http://youtube.com":      parseYoutube,
+          "https://youtube.com":     parseYoutube,
+          "https://youtu.be":        parseYoutube,
+          "http://youtu.be":         parseYoutube,
+          "http://adf.ly": parseAdfly
+        }
     def gettype(self):
         return "realtime"
     def __init_db_tables__(self, name):
@@ -91,12 +103,17 @@ class pluginClass(plugin):
             globalv.communication["urlFollowQueue"].put((complete, self.urlFollow))
             return [""]
     def urlFollow(self, complete, showDomain = True):
+        username = complete.user()
         complete=complete.complete()[1:].split(' :',1)
         if len(complete[0].split())>2:
             if complete[0].split()[1]=="PRIVMSG":
                 msg=complete[1]
                 sender=complete[0].split(' ')
                 sender=sender[2]
+
+                if isIgnored(username):
+                    return [""]
+
                 if msg.find('http://')!=-1 or msg.find('https://')!=-1:
 
                     url = re.search(".*(?P<url>https?://[^\s#]+)", msg).group("url")
